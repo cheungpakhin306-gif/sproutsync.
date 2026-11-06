@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SproutSync - 5-Person Scanned Study Group Timetable</title>
+  <title>SproutSync - Study Group Timetable</title>
   
-  <!-- [Step 2 已調整] 引入 Tesseract.js 純前端 OCR 引擎（完全免 Python / 零伺服器） -->
+  <!-- Tesseract.js in-browser OCR (No Python needed) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <!-- Tailwind CSS -->
@@ -38,23 +38,7 @@
               500: '#22c55e',
               600: '#16a34a',
               700: '#15803d',
-            },
-            planner: {
-              peach: '#fed7aa',
-              peachHeader: '#f97316',
-              mint: '#bbf7d0',
-              mintHeader: '#15803d',
-              lavender: '#e9d5ff',
-              lavenderHeader: '#7e22ce',
-              pink: '#fbcfe8',
-              pinkHeader: '#be185d',
-              sheetBg: '#fdfbf7',
-              line: '#e2e8f0'
             }
-          },
-          animation: {
-            'bounce-slow': 'bounce 2.5s infinite',
-            'pulse-subtle': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
           }
         }
       }
@@ -65,10 +49,6 @@
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.03); }
     ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 9999px; }
-    .perspective-1000 { perspective: 1000px; }
-    .transform-style-3d { transform-style: preserve-3d; }
-    .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-    .rotate-y-180 { transform: rotateY(180deg); }
     .screen-fade { transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
     * { -webkit-tap-highlight-color: transparent; user-select: none; }
     input, textarea { user-select: auto; }
@@ -94,169 +74,53 @@
     <!-- Main Screens Viewport Container -->
     <main id="app-viewport" class="flex-1 relative overflow-y-auto overflow-x-hidden bg-slate-50 flex flex-col">
       
-      <!-- SCREEN 1: LOGIN / ONBOARDING ENTRY -->
-      <section id="screen-login" class="screen-fade flex flex-col justify-between h-full p-6 bg-gradient-to-b from-emerald-50/60 via-white to-amber-50/40">
-        <div class="pt-6 text-center space-y-3">
+      <!-- SCREEN 1: ONBOARDING / JOIN SCREEN (NO PRESET USERS) -->
+      <section id="screen-welcome" class="screen-fade flex flex-col justify-between h-full p-6 bg-gradient-to-b from-emerald-50/60 via-white to-amber-50/40">
+        <div class="pt-8 text-center space-y-3">
           <div class="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
             <i data-lucide="sprout" class="w-9 h-9"></i>
           </div>
           <h1 class="text-2xl font-black text-slate-800 font-display tracking-tight">SproutSync</h1>
           <p class="text-xs text-slate-500 max-w-[280px] mx-auto font-medium leading-relaxed">
-            Scanned <strong class="text-slate-800 font-bold">5-Person Cohort Schedule</strong> with cloud sync & mutual gap finder.
+            Collaborative study timetable with in-browser timetable scanning & mutual free gap finder.
           </p>
         </div>
 
-        <div class="space-y-4 my-auto">
+        <!-- USER INPUT FORM -->
+        <div class="space-y-4 my-auto bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
           <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Your Active Participant Profile</label>
-            <div class="relative">
-              <select id="select-active-user" onchange="handleSelectParticipant(this.value)" class="w-full bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 outline-none transition shadow-xs cursor-pointer">
-                <option value="Alex" selected>Alex — Full-Stack Web Development</option>
-                <option value="Jordan">Jordan — Data Science & Analytics</option>
-                <option value="Taylor">Taylor — UX/UI Design & Product Systems</option>
-                <option value="Morgan">Morgan — Digital Marketing & Growth Strategy</option>
-                <option value="Casey">Casey — Agile Product & Project Management</option>
-              </select>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Your Name / Nickname</label>
+            <input type="text" id="input-username" placeholder="e.g. Alex or Taylor" class="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 outline-none transition shadow-2xs">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Your Major / Study Focus (Optional)</label>
+            <input type="text" id="input-major" placeholder="e.g. Computer Science" class="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 outline-none transition shadow-2xs">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">Pick Your Tag Color</label>
+            <div class="flex items-center justify-between px-1" id="color-picker-row">
+              <button type="button" onclick="selectTagColor('emerald', this)" class="color-dot w-7 h-7 rounded-full bg-emerald-500 ring-2 ring-emerald-400 ring-offset-2 transition scale-110"></button>
+              <button type="button" onclick="selectTagColor('indigo', this)" class="color-dot w-7 h-7 rounded-full bg-indigo-500 transition hover:scale-105"></button>
+              <button type="button" onclick="selectTagColor('rose', this)" class="color-dot w-7 h-7 rounded-full bg-rose-500 transition hover:scale-105"></button>
+              <button type="button" onclick="selectTagColor('amber', this)" class="color-dot w-7 h-7 rounded-full bg-amber-500 transition hover:scale-105"></button>
+              <button type="button" onclick="selectTagColor('sky', this)" class="color-dot w-7 h-7 rounded-full bg-sky-500 transition hover:scale-105"></button>
             </div>
           </div>
 
-          <div class="space-y-2.5 pt-2">
-            <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400 text-center">Select Operating Flow</span>
-            
-            <button onclick="startFlow('group_view')" class="w-full p-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/25 active:scale-[0.98] transition flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center text-sm">👥</span>
-                <div class="text-left">
-                  <div class="leading-tight">Open 5-Person Cohort Timetable</div>
-                  <div class="text-[10px] text-emerald-100 font-normal">Reconciled grid & cloud database</div>
-                </div>
-              </div>
-              <i data-lucide="chevron-right" class="w-4 h-4"></i>
-            </button>
-
-            <button onclick="startFlow('scan_sync')" class="w-full p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100/70 text-indigo-900 font-extrabold text-xs active:scale-[0.98] transition flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm">📷</span>
-                <div class="text-left">
-                  <div class="leading-tight">Scan Timetable Screenshot</div>
-                  <div class="text-[10px] text-indigo-600 font-normal">Browser OCR auto-extraction</div>
-                </div>
-              </div>
-              <i data-lucide="chevron-right" class="w-4 h-4 text-indigo-400"></i>
-            </button>
-
-            <button onclick="copyShareableLink()" class="w-full p-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs active:scale-[0.98] transition flex items-center justify-between shadow-xs">
-              <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-sm">🔗</span>
-                <div class="text-left">
-                  <div class="leading-tight">Copy Cohort Edit Link</div>
-                  <div class="text-[10px] text-slate-400 font-normal">Share with teammates for instant sync</div>
-                </div>
-              </div>
-              <i data-lucide="copy" class="w-4 h-4 text-slate-400"></i>
-            </button>
-          </div>
+          <button onclick="handleJoinGroup()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/25 active:scale-[0.98] transition flex items-center justify-center gap-2">
+            <span>Enter Study Space</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
         </div>
 
         <div class="text-center text-[11px] text-slate-400 pb-2">
-          5-Person Course Schedule (Mon–Fri) • Google Sheets Sync
+          Group ID: <span id="welcome-group-label" class="font-bold text-slate-600">new</span>
         </div>
       </section>
 
-      <!-- SCREEN 2: CHOOSE / CONFIRM PERSONAL COLOR -->
-      <section id="screen-color-select" class="screen-fade hidden flex flex-col justify-between h-full p-6 bg-white">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <button onclick="navigateBack('screen-login')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200">
-              <i data-lucide="chevron-left" class="w-4 h-4"></i>
-            </button>
-            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-              Cohort Colors
-            </span>
-          </div>
-
-          <h2 class="text-xl font-extrabold text-slate-900 font-display">Assigned Member Colors</h2>
-          <p class="text-xs text-slate-500 mt-1">
-            Each participant in the 5-person group is color-coded for quick visual identification:
-          </p>
-
-          <div id="palette-grid" class="grid grid-cols-1 gap-2 mt-5"></div>
-        </div>
-
-        <div class="pt-4">
-          <button onclick="proceedFromColor()" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-extrabold text-xs shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
-            <span>Continue to Scanned Schedule Overview</span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- SCREEN 3: SCANNED SCHEDULE KPI & OCR UPLOAD -->
-      <section id="screen-upload-schedule" class="screen-fade hidden flex flex-col justify-between h-full p-6 bg-white">
-        <div class="space-y-3.5">
-          <div class="flex items-center justify-between">
-            <button onclick="navigateBack('screen-login')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200">
-              <i data-lucide="chevron-left" class="w-4 h-4"></i>
-            </button>
-            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-              Cloud Synced
-            </span>
-          </div>
-
-          <div>
-            <h2 class="text-xl font-extrabold text-slate-900 font-display">Upload / Scan Timetable</h2>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Sync timetable screenshots via in-browser OCR directly into Google Sheets.
-            </p>
-          </div>
-
-          <!-- OCR 圖片選取器與進度條 -->
-          <div class="border-2 border-dashed border-emerald-300 rounded-3xl p-4 bg-emerald-50/40 text-center space-y-2.5">
-            <input type="file" id="browser-ocr-file-input" accept="image/*" class="hidden" onchange="handleBrowserOCR(event)">
-            
-            <div class="w-12 h-12 mx-auto rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-              <i data-lucide="camera" class="w-6 h-6"></i>
-            </div>
-            
-            <div>
-              <div class="text-xs font-bold text-slate-800">Scan Timetable Image (No Python Needed)</div>
-              <div class="text-[10px] text-slate-500 mt-0.5">Supports PNG, JPG screenshot with days & times</div>
-            </div>
-
-            <button onclick="document.getElementById('browser-ocr-file-input').click()" id="btn-trigger-ocr" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition active:scale-95 inline-flex items-center gap-1.5">
-              <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-              <span>Select Timetable Image</span>
-            </button>
-
-            <div id="ocr-progress-box" class="hidden pt-1">
-              <div class="text-[10px] font-bold text-emerald-700 mb-1" id="ocr-status-text">Recognizing text... 0%</div>
-              <div class="w-full bg-emerald-200 rounded-full h-1.5 overflow-hidden">
-                <div id="ocr-progress-bar" class="bg-emerald-600 h-full w-0 transition-all duration-200"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Slots List -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-slate-700">Enrolled Members & Tracks</span>
-              <button onclick="fetchSharedSchedule()" class="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
-                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Sync Cloud
-              </button>
-            </div>
-            <div id="user-slots-list" class="space-y-1.5 max-h-44 overflow-y-auto pr-1"></div>
-          </div>
-        </div>
-
-        <div class="pt-3">
-          <button onclick="enterMainTimetable()" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
-            <span>Launch Live Interactive Timetable</span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- SCREEN 4: MAIN REGULAR USE TIMETABLE -->
+      <!-- SCREEN 2: MAIN TIMETABLE (EMPTY STATE DEFAULT) -->
       <section id="screen-main-timetable" class="screen-fade hidden flex flex-col h-full bg-slate-50">
         
         <!-- Top App Bar -->
@@ -264,11 +128,11 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <div id="user-badge-avatar" class="w-9 h-9 rounded-2xl flex items-center justify-center text-white font-extrabold text-xs shadow-sm ring-2 ring-emerald-100 bg-emerald-600">
-                AL
+                ME
               </div>
               <div>
-                <h3 class="text-sm font-extrabold text-slate-800 leading-tight" id="main-user-display">Alex</h3>
-                <span id="main-group-tag" class="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                <h3 class="text-sm font-extrabold text-slate-800 leading-tight" id="main-user-display">You</h3>
+                <span class="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span id="label-group-id">Cohort</span>
                 </span>
@@ -279,43 +143,40 @@
               <button onclick="copyShareableLink()" title="Share Cohort Link" class="p-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 transition">
                 <i data-lucide="share-2" class="w-4 h-4"></i>
               </button>
-              <button onclick="togglePlannerViewMode()" id="btn-toggle-view" title="Toggle Digital Planner Sheet" class="px-2 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold flex items-center gap-1 hover:bg-amber-100 transition shadow-xs">
-                <i data-lucide="book-marked" class="w-3.5 h-3.5 text-amber-600"></i>
-                <span id="planner-view-label">Planner</span>
+              <button onclick="openUploadOCRModal()" title="Upload Screenshot" class="p-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition">
+                <i data-lucide="camera" class="w-4 h-4"></i>
               </button>
               <button onclick="openCommonSlotModal()" title="Common Free Slot Finder" class="p-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition">
                 <i data-lucide="users-2" class="w-4 h-4"></i>
               </button>
-              <button onclick="openCollectionModal()" title="Botanical Collection" class="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center hover:bg-emerald-100 transition relative">
-                <i data-lucide="sprout" class="w-4 h-4"></i>
-                <span id="collection-badge-count" class="absolute -top-1 -right-1 bg-emerald-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">3</span>
+              <button onclick="openAddSlotQuickModal()" title="Add Custom Slot" class="p-1.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition">
+                <i data-lucide="plus" class="w-4 h-4"></i>
               </button>
             </div>
           </div>
 
-          <!-- Capacity Meter & Cohort Hours Summary -->
+          <!-- Cohort Sync Banner -->
           <div class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-2.5 text-white shadow-xs">
             <div class="flex items-center justify-between text-[11px]">
               <div class="flex items-center gap-1.5">
-                <i data-lucide="gauge" class="w-3.5 h-3.5 text-emerald-400"></i>
-                <span class="font-extrabold tracking-wide uppercase text-[9px] text-slate-300">Cohort Workload & Sync</span>
+                <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span class="font-extrabold tracking-wide uppercase text-[9px] text-slate-300">Live Study Database</span>
               </div>
-              <span id="capacity-hours-display" class="font-bold text-emerald-400 text-xs">Cloud Synced</span>
+              <span id="capacity-hours-display" class="font-bold text-emerald-400 text-xs">0 Sessions</span>
             </div>
             
             <div class="mt-2 flex items-center justify-between text-[10px]">
               <div class="flex items-center gap-1.5 text-slate-300">
-                <span>Rooms: <b>Room A & B</b></span>
-                <span>• Live Database</span>
+                <span id="active-members-count">Active members: 1</span>
               </div>
               <button onclick="fetchSharedSchedule()" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1 text-[9px]">
                 <i data-lucide="refresh-cw" class="w-3 h-3 text-emerald-400"></i>
-                <span>Refresh</span>
+                <span>Sync</span>
               </button>
             </div>
           </div>
 
-          <!-- Day Navigation & View Toggle -->
+          <!-- Day Navigation -->
           <div class="flex items-center justify-between pt-0.5">
             <div class="flex items-center space-x-1" id="day-pill-container"></div>
             <div class="text-[11px] font-extrabold text-slate-500" id="current-day-label">
@@ -326,85 +187,41 @@
 
         <!-- Timetable Body Grid -->
         <div class="flex-1 overflow-y-auto p-3.5 space-y-3" id="main-content-scroll">
-          
-          <!-- Mode A: Regular Timetable Cards View -->
           <div id="regular-timetable-container" class="space-y-2.5">
-            <div class="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-xs" id="group-legend-row"></div>
+            <div class="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-xs" id="group-legend-row">
+              <span class="text-slate-400 text-[11px]">No slots registered yet.</span>
+            </div>
             <div class="space-y-2.5" id="timetable-slots-container"></div>
           </div>
-
-          <!-- Mode B: Embedded Student Digital Notebook View -->
-          <div id="embedded-notebook-container" class="hidden">
-            <div class="bg-[#fdfcf7] rounded-3xl p-3.5 border-2 border-slate-300 shadow-md relative overflow-hidden">
-              <div class="flex items-center justify-between pb-2 mb-2 border-b-2 border-dashed border-slate-200 text-slate-400">
-                <span class="text-xs font-hand text-slate-600 font-bold tracking-wide">📓 REGULATED STUDY JOURNAL 2026</span>
-                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-sans font-bold px-2 py-0.5 rounded-full">Cloud Active</span>
-              </div>
-
-              <div class="grid grid-cols-12 gap-2.5">
-                <div class="col-span-7 bg-white rounded-2xl border-2 border-orange-200 overflow-hidden shadow-xs flex flex-col">
-                  <div class="bg-orange-100/90 text-orange-800 px-2 py-1.5 text-center font-bold text-xs border-b-2 border-orange-200 font-hand text-base">
-                    📅 Day Plan & Rooms
-                  </div>
-                  <div class="p-1.5 divide-y divide-slate-100 text-[11px]" id="embedded-schedule-table"></div>
-                </div>
-
-                <div class="col-span-5 space-y-2.5 flex flex-col">
-                  <div class="bg-white rounded-2xl border-2 border-emerald-200 overflow-hidden shadow-xs">
-                    <div class="bg-emerald-100 text-emerald-800 px-2 py-1 text-center font-bold font-hand text-sm border-b-2 border-emerald-200">
-                      ✨ Sprint Goals
-                    </div>
-                    <div class="p-1.5 space-y-1" id="embedded-priorities-list"></div>
-                  </div>
-
-                  <div class="bg-white rounded-2xl border-2 border-purple-200 overflow-hidden shadow-xs">
-                    <div class="bg-purple-100 text-purple-800 px-2 py-1 text-center font-bold font-hand text-sm border-b-2 border-purple-200">
-                      🤝 Cohort Gaps
-                    </div>
-                    <div class="p-1.5 space-y-1" id="embedded-tasks-list"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
 
-        <!-- Mobile Bottom Nav Bar -->
+        <!-- Mobile Bottom Action Bar -->
         <nav class="h-16 bg-white border-t border-slate-200 px-6 flex items-center justify-around shrink-0 z-20">
-          <button onclick="setTabTimetable()" id="nav-btn-time" class="flex flex-col items-center text-emerald-600 text-[10px] font-bold">
-            <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
-            <span>Timetable</span>
+          <button onclick="openUploadOCRModal()" class="flex flex-col items-center text-emerald-600 text-[10px] font-bold">
+            <i data-lucide="camera" class="w-5 h-5 mb-0.5"></i>
+            <span>Scan Timetable</span>
           </button>
-          <button onclick="askAITimeAssistant()" class="flex flex-col items-center text-slate-400 hover:text-emerald-600 text-[10px] font-bold transition">
-            <i data-lucide="sparkles" class="w-5 h-5 mb-0.5 text-amber-500"></i>
-            <span>AI Coach</span>
-          </button>
-          <button onclick="openAddSlotQuickModal()" class="w-10 h-10 -mt-5 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/30 active:scale-95 transition" title="Add Supplemental Study">
+          <button onclick="openAddSlotQuickModal()" class="w-10 h-10 -mt-5 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/30 active:scale-95 transition" title="Add Session">
             <i data-lucide="plus" class="w-5 h-5"></i>
           </button>
           <button onclick="openCommonSlotModal()" class="flex flex-col items-center text-slate-400 hover:text-emerald-600 text-[10px] font-bold transition">
             <i data-lucide="users-2" class="w-5 h-5 mb-0.5 text-indigo-500"></i>
-            <span>Sync Gap</span>
-          </button>
-          <button onclick="toggleSwitchProfileModal()" class="flex flex-col items-center text-slate-400 hover:text-emerald-600 text-[10px] font-bold transition">
-            <i data-lucide="sliders-horizontal" class="w-5 h-5 mb-0.5"></i>
-            <span>Cohort</span>
+            <span>Sync Free Time</span>
           </button>
         </nav>
       </section>
 
-      <!-- SCREEN 5: FOCUS SESSION & PLANT GROWTH TIMER -->
+      <!-- SCREEN 3: FOCUS SESSION & PLANT GROWTH TIMER -->
       <section id="screen-focus-plant" class="screen-fade hidden flex flex-col justify-between h-full bg-gradient-to-b from-emerald-950 via-slate-900 to-emerald-950 text-white p-6 relative overflow-hidden">
         <div class="relative z-10 flex items-center justify-between">
           <button onclick="exitFocusTimerPrompt()" class="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
           <div class="text-center">
-            <span class="text-[10px] font-bold tracking-widest uppercase text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20" id="focus-mode-badge">
-              Regulated Focus
+            <span class="text-[10px] font-bold tracking-widest uppercase text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+              Focus Timer
             </span>
-            <h4 class="text-xs font-semibold text-slate-300 mt-1 max-w-[200px] truncate" id="focus-subject-tag">Modern JavaScript & Architecture</h4>
+            <h4 class="text-xs font-semibold text-slate-300 mt-1 max-w-[200px] truncate" id="focus-subject-tag">Study Session</h4>
           </div>
           <button onclick="toggleTurboDemoTimer()" id="btn-turbo-mode" class="px-2.5 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-[10px] font-bold text-amber-300 flex items-center gap-1">
             <i data-lucide="zap" class="w-3 h-3"></i> Turbo
@@ -413,13 +230,15 @@
 
         <div class="relative z-10 flex flex-col items-center justify-center my-auto">
           <div class="w-64 h-64 relative flex items-center justify-center">
-            <div id="plant-aura" class="absolute inset-0 rounded-full bg-emerald-500/10 scale-90 animate-pulse-subtle transition-all duration-700"></div>
-            <div id="plant-stage-art" class="w-48 h-48 flex items-center justify-center transition-transform duration-500"></div>
+            <div class="absolute inset-0 rounded-full bg-emerald-500/10 scale-90 animate-pulse transition-all"></div>
+            <div id="plant-stage-art" class="w-48 h-48 flex items-center justify-center">
+              <svg viewBox="0 0 160 160" class="w-36 h-36 drop-shadow-lg"><path d="M40 110 L50 145 Q80 152 110 145 L120 110 Z" fill="#92400e"/><ellipse cx="80" cy="110" rx="34" ry="7" fill="#451a03"/><circle cx="80" cy="108" r="6" fill="#f59e0b" class="animate-pulse"/></svg>
+            </div>
           </div>
 
           <div class="text-center mt-2">
-            <div id="plant-stage-name" class="text-base font-extrabold text-emerald-300 font-display">Stage 1: Seed in Soil 🌱</div>
-            <p id="plant-stage-hint" class="text-xs text-slate-400 mt-0.5 max-w-[240px]">Stay focused to nurture this seedling with your study minutes.</p>
+            <div id="plant-stage-name" class="text-base font-extrabold text-emerald-300 font-display">Seed in Soil 🌱</div>
+            <p class="text-xs text-slate-400 mt-0.5 max-w-[240px]">Focus to grow your botanical seedling.</p>
           </div>
 
           <div class="mt-5">
@@ -444,29 +263,46 @@
         </div>
       </section>
 
-      <!-- SCREEN 6: PLANT HARVEST CELEBRATION -->
-      <section id="screen-plant-reward" class="screen-fade hidden flex flex-col justify-between h-full bg-gradient-to-b from-slate-900 to-emerald-950 text-white p-6 relative overflow-hidden">
-        <div class="pt-4 text-center">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
-            ✨ Module Study Block Completed!
-          </span>
-          <h2 class="text-2xl font-black font-display text-white mt-3 leading-snug">Grown plant collected!</h2>
-          <div class="mt-6 p-5 rounded-3xl bg-white/10 backdrop-blur-lg border border-white/15 shadow-xl relative overflow-hidden text-center">
-            <div class="w-32 h-32 mx-auto flex items-center justify-center animate-bounce-slow" id="unlocked-plant-visual"></div>
-            <h3 class="text-lg font-black text-amber-300 font-display mt-2" id="unlocked-plant-title">Golden Sunburst Blossom 🌸</h3>
-          </div>
-        </div>
-
-        <div class="space-y-2.5 pt-4">
-          <button onclick="returnToMainTimetable()" class="w-full py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition">
-            Back to Timetable
-          </button>
-        </div>
-      </section>
-
     </main>
 
-    <!-- ASYNCHRONOUS COMMON SLOT FINDER MODAL -->
+    <!-- OCR UPLOAD MODAL -->
+    <div id="ocr-upload-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+      <div class="w-full max-w-sm bg-white rounded-t-[32px] sm:rounded-3xl p-5 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <i data-lucide="camera" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900 font-display">Scan Timetable</h3>
+              <p class="text-[10px] text-slate-500">Auto-extract schedules from photo</p>
+            </div>
+          </div>
+          <button onclick="closeUploadOCRModal()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 text-xs">✕</button>
+        </div>
+
+        <div class="py-4 space-y-3">
+          <div class="border-2 border-dashed border-emerald-300 rounded-3xl p-4 bg-emerald-50/40 text-center space-y-2">
+            <input type="file" id="browser-ocr-file-input" accept="image/*" class="hidden" onchange="handleBrowserOCR(event)">
+            <p class="text-xs font-bold text-slate-700">Upload Screenshot or Timetable photo</p>
+            <p class="text-[10px] text-slate-400">Client-side AI will parse Day & Time ranges</p>
+            <button onclick="document.getElementById('browser-ocr-file-input').click()" id="btn-trigger-ocr" class="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition active:scale-95 inline-flex items-center gap-1.5">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+              <span>Select File</span>
+            </button>
+          </div>
+
+          <div id="ocr-progress-box" class="hidden pt-1">
+            <div class="text-[10px] font-bold text-emerald-700 mb-1" id="ocr-status-text">Recognizing text... 0%</div>
+            <div class="w-full bg-emerald-200 rounded-full h-1.5 overflow-hidden">
+              <div id="ocr-progress-bar" class="bg-emerald-600 h-full w-0 transition-all duration-200"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMON FREE SLOT FINDER MODAL -->
     <div id="common-slot-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-300">
       <div class="w-full max-w-sm bg-white rounded-t-[32px] sm:rounded-3xl p-5 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
@@ -475,8 +311,8 @@
               <i data-lucide="users-2" class="w-4 h-4"></i>
             </div>
             <div>
-              <h3 class="text-sm font-extrabold text-slate-900 font-display">Cohort Common Free Slots</h3>
-              <p class="text-[10px] text-slate-500">Dynamically calculated across all members</p>
+              <h3 class="text-sm font-extrabold text-slate-900 font-display">Mutual Free Slots</h3>
+              <p class="text-[10px] text-slate-500">Calculated when all members are available</p>
             </div>
           </div>
           <button onclick="closeCommonSlotModal()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 text-xs">✕</button>
@@ -484,7 +320,7 @@
 
         <div class="flex-1 overflow-y-auto py-3 space-y-2.5 text-xs">
           <div class="p-2.5 bg-indigo-50 border border-indigo-200 rounded-2xl text-[11px] text-indigo-950 leading-relaxed">
-            Reconciling all member schedules in Google Sheet to find non-overlapping free time:
+            Non-overlapping cohort discussion gaps:
           </div>
           <div class="space-y-2" id="common-free-gaps-list"></div>
         </div>
@@ -511,7 +347,7 @@
         <form onsubmit="handleSaveNewSlot(event)" class="space-y-3.5 pt-4">
           <div>
             <label class="block text-[11px] font-bold text-slate-700 mb-1">Session Title</label>
-            <input type="text" id="slot-name-input" required placeholder="e.g. Capstone Lab Review" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500">
+            <input type="text" id="slot-name-input" required placeholder="e.g. Capstone Project Lab" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500">
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
@@ -536,51 +372,12 @@
           </div>
           <div>
             <label class="block text-[11px] font-bold text-slate-700 mb-1">Room Assignment</label>
-            <select id="slot-room-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none">
-              <option value="Room A">Room A</option>
-              <option value="Room B">Room B</option>
-              <option value="Studio Lab">Studio Lab</option>
-            </select>
+            <input type="text" id="slot-room-input" placeholder="e.g. Room A or Studio" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500">
           </div>
           <button type="submit" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 transition mt-2">
             Save & Sync to Sheet
           </button>
         </form>
-      </div>
-    </div>
-
-    <!-- 5-PERSON COHORT PERSONA SWITCHER MODAL -->
-    <div id="switch-profile-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-      <div class="w-full max-w-sm bg-white rounded-t-[32px] sm:rounded-3xl p-6 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <h3 class="text-base font-extrabold text-slate-900 font-display">Switch Active Participant</h3>
-            <p class="text-xs text-slate-500">Filter timetable to individual or all</p>
-          </div>
-          <button onclick="toggleSwitchProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </button>
-        </div>
-        <div class="space-y-2 py-4">
-          <button onclick="setFilterParticipant('All')" class="w-full p-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-800 text-left hover:bg-slate-200 flex items-center justify-between text-xs font-bold transition">
-            <span>🌐 View All (Master Grid)</span>
-          </button>
-          <button onclick="setFilterParticipant('Alex')" class="w-full p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-left hover:bg-emerald-100 flex items-center justify-between text-xs font-bold transition">
-            <span>🟢 Alex</span>
-          </button>
-          <button onclick="setFilterParticipant('Jordan')" class="w-full p-2.5 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-left hover:bg-indigo-100 flex items-center justify-between text-xs font-bold transition">
-            <span>🟣 Jordan</span>
-          </button>
-          <button onclick="setFilterParticipant('Taylor')" class="w-full p-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-left hover:bg-rose-100 flex items-center justify-between text-xs font-bold transition">
-            <span>🔴 Taylor</span>
-          </button>
-          <button onclick="setFilterParticipant('Morgan')" class="w-full p-2.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-left hover:bg-amber-100 flex items-center justify-between text-xs font-bold transition">
-            <span>🟡 Morgan</span>
-          </button>
-          <button onclick="setFilterParticipant('Casey')" class="w-full p-2.5 rounded-2xl bg-sky-50 border border-sky-200 text-sky-900 text-left hover:bg-sky-100 flex items-center justify-between text-xs font-bold transition">
-            <span>🔵 Casey</span>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -593,39 +390,34 @@
   </div>
 
   <script>
+    // Google Apps Script Web App Deployment URL
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzpCV7_fNnR5UC13ke8TQnvwwdCzgL-RNLAz2tXoCD0J0IIAuEDRx5kvpJTYITLbRuZiA/exec";
 
+    // Auto-resolve group from URL query param, e.g. ?group=cohort-xyz
     const urlParams = new URLSearchParams(window.location.search);
     let currentGroupId = urlParams.get('group');
     if (!currentGroupId) {
-      currentGroupId = "cohort-" + Math.random().toString(36).substring(2, 7);
+      currentGroupId = "group-" + Math.random().toString(36).substring(2, 7);
       window.history.replaceState(null, '', `?group=${currentGroupId}`);
     }
 
-    const COHORT_MEMBERS = [
-      { name: 'Alex', colorId: 'emerald', hex: '#10b981', bgClass: 'bg-emerald-500', textClass: 'text-emerald-700', lightBg: 'bg-emerald-50', borderClass: 'border-emerald-500', track: 'Full-Stack Web Development' },
-      { name: 'Jordan', colorId: 'indigo', hex: '#6366f1', bgClass: 'bg-indigo-500', textClass: 'text-indigo-700', lightBg: 'bg-indigo-50', borderClass: 'border-indigo-500', track: 'Data Science & Analytics' },
-      { name: 'Taylor', colorId: 'rose', hex: '#f43f5e', bgClass: 'bg-rose-500', textClass: 'text-rose-700', lightBg: 'bg-rose-50', borderClass: 'border-rose-500', track: 'UX/UI Design & Product Systems' },
-      { name: 'Morgan', colorId: 'amber', hex: '#f59e0b', bgClass: 'bg-amber-500', textClass: 'text-amber-700', lightBg: 'bg-amber-50', borderClass: 'border-amber-500', track: 'Digital Marketing & Growth Strategy' },
-      { name: 'Casey', colorId: 'sky', hex: '#0284c7', bgClass: 'bg-sky-500', textClass: 'text-sky-700', lightBg: 'bg-sky-50', borderClass: 'border-sky-500', track: 'Agile Product & Project Management' }
-    ];
+    // Color definitions
+    const COLOR_THEMES = {
+      emerald: { hex: '#10b981', bgClass: 'bg-emerald-500', textClass: 'text-emerald-700', lightBg: 'bg-emerald-50', borderClass: 'border-emerald-500' },
+      indigo: { hex: '#6366f1', bgClass: 'bg-indigo-500', textClass: 'text-indigo-700', lightBg: 'bg-indigo-50', borderClass: 'border-indigo-500' },
+      rose: { hex: '#f43f5e', bgClass: 'bg-rose-500', textClass: 'text-rose-700', lightBg: 'bg-rose-50', borderClass: 'border-rose-500' },
+      amber: { hex: '#f59e0b', bgClass: 'bg-amber-500', textClass: 'text-amber-700', lightBg: 'bg-amber-50', borderClass: 'border-amber-500' },
+      sky: { hex: '#0284c7', bgClass: 'bg-sky-500', textClass: 'text-sky-700', lightBg: 'bg-sky-50', borderClass: 'border-sky-500' }
+    };
 
-    const DEFAULT_SCHEDULE = [
-      { id: 1, user: 'Alex', colorId: 'emerald', day: 'Mon', startTime: '08:00', endTime: '11:00', time: '08:00 - 11:00', room: 'Room A', title: 'Modern JavaScript & Architecture', hours: 3.0 },
-      { id: 2, user: 'Morgan', colorId: 'amber', day: 'Mon', startTime: '09:30', endTime: '12:30', time: '09:30 - 12:30', room: 'Room B', title: 'Audience Segmentation & Funnels', hours: 3.0 },
-      { id: 3, user: 'Jordan', colorId: 'indigo', day: 'Mon', startTime: '11:15', endTime: '14:15', time: '11:15 - 14:15', room: 'Room A', title: 'Exploratory Data Analysis with Python', hours: 3.0 },
-      { id: 4, user: 'Casey', colorId: 'sky', day: 'Mon', startTime: '13:30', endTime: '16:30', time: '13:30 - 16:30', room: 'Room B', title: 'Agile Frameworks & Ceremonies', hours: 3.0 },
-      { id: 5, user: 'Taylor', colorId: 'rose', day: 'Mon', startTime: '14:30', endTime: '17:30', time: '14:30 - 17:30', room: 'Room A', title: 'User Research & Empathy Mapping', hours: 3.0 }
-    ];
-
+    // Clean initial state (NO mock users, NO mock lessons, NO fake records)
     const state = {
-      mode: 'group_view',
-      activePlannerTab: 'cards',
-      currentUser: { name: 'Alex', colorId: 'emerald', avatarInitials: 'AL', track: 'Full-Stack Web Development' },
-      filterUser: 'All',
+      currentUser: null,
+      selectedColor: 'emerald',
       activeDay: 'Mon',
-      schedule: [...DEFAULT_SCHEDULE],
-      focus: { timerDuration: 25 * 60, remaining: 25 * 60, intervalId: null, isRunning: false, turboMode: false, currentStage: 1, activeSubject: 'Module Study' }
+      schedule: [], // Clean empty schedule
+      filterUser: 'All',
+      focus: { timerDuration: 25 * 60, remaining: 25 * 60, intervalId: null, isRunning: false, turboMode: false, activeSubject: 'Study Session' }
     };
 
     let synth = null;
@@ -641,54 +433,96 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
+      document.getElementById('welcome-group-label').textContent = currentGroupId;
       document.getElementById('label-group-id').textContent = currentGroupId;
-      renderPalette();
-      renderUserSlots();
       renderTimetableDays();
-      renderTimetableContent();
-      renderEmbeddedNotebook();
-      populateDynamicGaps();
-      fetchSharedSchedule();
+
+      // Check if user already registered locally in this browser
+      const savedUser = localStorage.getItem('sproutsync_user_' + currentGroupId);
+      if (savedUser) {
+        state.currentUser = JSON.parse(savedUser);
+        activateMainInterface();
+      }
     });
+
+    function selectTagColor(colorKey, btnEl) {
+      state.selectedColor = colorKey;
+      document.querySelectorAll('.color-dot').forEach(el => {
+        el.classList.remove('ring-2', 'ring-offset-2', 'scale-110');
+      });
+      btnEl.classList.add('ring-2', 'ring-offset-2', 'scale-110');
+      playChime('step');
+    }
+
+    function handleJoinGroup() {
+      const nameInput = document.getElementById('input-username').value.trim();
+      const majorInput = document.getElementById('input-major').value.trim() || 'General Studies';
+      if (!nameInput) {
+        showToast("Please enter your name!");
+        return;
+      }
+
+      state.currentUser = {
+        name: nameInput,
+        major: majorInput,
+        colorId: state.selectedColor,
+        avatarInitials: nameInput.substring(0, 2).toUpperCase()
+      };
+
+      // Save locally to persist current user session
+      localStorage.setItem('sproutsync_user_' + currentGroupId, JSON.stringify(state.currentUser));
+      playChime('success');
+      activateMainInterface();
+    }
+
+    function activateMainInterface() {
+      const user = state.currentUser;
+      const theme = COLOR_THEMES[user.colorId] || COLOR_THEMES.emerald;
+
+      const avatar = document.getElementById('user-badge-avatar');
+      avatar.textContent = user.avatarInitials;
+      avatar.className = `w-9 h-9 rounded-2xl flex items-center justify-center text-white font-extrabold text-xs shadow-sm ring-2 ring-emerald-100 ${theme.bgClass}`;
+
+      document.getElementById('main-user-display').textContent = user.name;
+      
+      switchScreen('screen-main-timetable');
+      fetchSharedSchedule();
+    }
 
     async function fetchSharedSchedule() {
       if (GAS_API_URL.includes("YOUR_DEPLOYMENT_ID")) return;
       try {
-        showToast("正在同步雲端課表...");
+        showToast("Syncing group schedule...");
         const res = await fetch(`${GAS_API_URL}?action=getGroupSchedule&group_id=${currentGroupId}`);
         const data = await res.json();
-        if (data.slots && data.slots.length > 0) {
-          state.schedule = data.slots.map(s => {
-            const member = COHORT_MEMBERS.find(m => m.name === s.user) || COHORT_MEMBERS[0];
-            return {
-              id: s.id,
-              user: s.user,
-              colorId: member.colorId,
-              day: s.day,
-              startTime: s.startTime,
-              endTime: s.endTime,
-              time: s.time || `${s.startTime} - ${s.endTime}`,
-              title: s.title,
-              room: s.room || 'Room A',
-              hours: 1.5
-            };
-          });
+        if (data.slots) {
+          state.schedule = data.slots.map(s => ({
+            id: s.id,
+            user: s.user,
+            colorId: 'emerald',
+            day: s.day,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            time: s.time || `${s.startTime} - ${s.endTime}`,
+            title: s.title,
+            room: s.room || 'Room A'
+          }));
           renderTimetableContent();
-          renderEmbeddedNotebook();
           populateDynamicGaps();
-          showToast(`已成功同步 ${state.schedule.length} 堂雲端課程！`);
+          showToast(`Synced ${state.schedule.length} sessions from cloud!`);
         }
       } catch (err) {
-        console.error("同步 Google Sheet 失敗:", err);
+        console.error("Failed to sync from cloud:", err);
       }
     }
 
     function copyShareableLink() {
       navigator.clipboard.writeText(window.location.href).then(() => {
-        showToast("📋 協同編輯連結已複製！發給組員即可加入");
+        showToast("📋 Cohort share link copied to clipboard!");
       });
     }
 
+    /* In-Browser OCR parsing */
     async function handleBrowserOCR(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -703,7 +537,7 @@
       uploadBtn.classList.add('opacity-50');
 
       try {
-        showToast("開始辨識課表圖片...");
+        showToast("Scanning timetable screenshot...");
         const result = await Tesseract.recognize(
           file,
           'eng',
@@ -738,35 +572,34 @@
         }
 
         if (newSlots.length === 0) {
-          showToast("未能辨識出時間格式，請改用手動新增！");
+          showToast("No time matches found. Try entering manually.");
           return;
         }
 
-        const currentUser = state.currentUser.name;
+        const currentUser = state.currentUser ? state.currentUser.name : "Member";
         const formattedSlots = newSlots.map((s, idx) => ({
           id: Date.now() + idx,
           user: currentUser,
-          colorId: state.currentUser.colorId,
+          colorId: state.currentUser ? state.currentUser.colorId : 'emerald',
           day: s.day,
           startTime: s.startTime,
           endTime: s.endTime,
           time: `${s.startTime} - ${s.endTime}`,
           title: s.title,
-          room: s.room,
-          hours: 1.5
+          room: s.room
         }));
 
         state.schedule.push(...formattedSlots);
         renderTimetableContent();
-        renderEmbeddedNotebook();
         populateDynamicGaps();
+        closeUploadOCRModal();
 
         await syncSlotsToCloud(newSlots);
-        showToast(`🎉 成功辨識 ${newSlots.length} 堂課並存入 Google Sheet！`);
+        showToast(`🎉 Added ${newSlots.length} sessions to your schedule!`);
 
       } catch (err) {
-        console.error("OCR 辨識出錯:", err);
-        showToast("圖片辨識失敗，請確認圖片清晰度。");
+        console.error("OCR parse error:", err);
+        showToast("OCR processing failed. Try a cleaner screenshot.");
       } finally {
         progressBox.classList.add('hidden');
         uploadBtn.disabled = false;
@@ -785,22 +618,28 @@
           body: JSON.stringify({
             action: "saveSlots",
             group_id: currentGroupId,
-            user_name: state.currentUser.name,
+            user_name: state.currentUser ? state.currentUser.name : 'Member',
             slots: slotsToSave
           })
         });
       } catch (err) {
-        console.error("寫入 Google Sheet 失敗:", err);
+        console.error("Cloud sync write failed:", err);
       }
     }
 
+    /* Common free gap calculation */
     function populateDynamicGaps() {
       const container = document.getElementById('common-free-gaps-list');
       if (!container) return;
 
+      if (state.schedule.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">Add your schedule to compute mutual free slots!</div>`;
+        return;
+      }
+
       const gaps = calculateCohortFreeGaps(state.schedule);
       if (gaps.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">目前未找到全員共同空檔</div>`;
+        container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">No common free gaps identified.</div>`;
         return;
       }
 
@@ -811,11 +650,11 @@
               <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold text-[9px]">${g.day} • ${g.time}</span>
               <span class="text-[9px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded">${g.match}</span>
             </div>
-            <div class="text-xs font-bold text-slate-800">全體組員空檔</div>
-            <div class="text-[10px] text-slate-400">時長：${g.duration}</div>
+            <div class="text-xs font-bold text-slate-800">Everyone Available</div>
+            <div class="text-[10px] text-slate-400">Duration: ${g.duration}</div>
           </div>
           <button onclick="bookCommonSlot('${g.day}', '${g.time}')" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] active:scale-95 transition">
-            排定討論
+            Schedule
           </button>
         </div>
       `).join('');
@@ -858,7 +697,7 @@
               day,
               time: `${formatMinutes(cursor)} - ${formatMinutes(bStart)}`,
               duration: `${((bStart - cursor) / 60).toFixed(1)} hrs`,
-              match: '全員可用 ☕'
+              match: 'Open Gap ☕'
             });
           }
           cursor = Math.max(cursor, bEnd);
@@ -869,7 +708,7 @@
             day,
             time: `${formatMinutes(cursor)} - ${formatMinutes(dayEnd)}`,
             duration: `${((dayEnd - cursor) / 60).toFixed(1)} hrs`,
-            match: '晚間空檔 🌙'
+            match: 'Evening Gap 🌙'
           });
         }
       });
@@ -889,8 +728,8 @@
         day: day,
         startTime: start,
         endTime: end,
-        title: '5-Person Cohort Discussion & Synthesis',
-        room: 'Executive Seminar Lab'
+        title: 'Group Study Discussion',
+        room: 'Study Room'
       };
 
       state.schedule.push({
@@ -902,83 +741,14 @@
         endTime: end,
         time: time,
         room: newSlot.room,
-        title: newSlot.title,
-        hours: 1.0
+        title: newSlot.title
       });
 
       playChime('success');
-      showToast(`已排定 ${day} ${time} 小組討論！`);
+      showToast(`Scheduled group session on ${day} ${time}!`);
       closeCommonSlotModal();
       renderTimetableContent();
       syncSlotsToCloud([newSlot]);
-    }
-
-    function handleSelectParticipant(name) {
-      const member = COHORT_MEMBERS.find(m => m.name === name) || COHORT_MEMBERS[0];
-      state.currentUser = { name: member.name, colorId: member.colorId, avatarInitials: member.name.substring(0, 2).toUpperCase(), track: member.track };
-      state.filterUser = name;
-      updateUserBadges();
-      showToast(`已切換身分為 ${name}`);
-    }
-
-    function setFilterParticipant(name) {
-      toggleSwitchProfileModal();
-      state.filterUser = name;
-      if (name !== 'All') {
-        const member = COHORT_MEMBERS.find(m => m.name === name);
-        if (member) {
-          state.currentUser = { name: member.name, colorId: member.colorId, avatarInitials: member.name.substring(0, 2).toUpperCase(), track: member.track };
-          updateUserBadges();
-        }
-      }
-      renderTimetableContent();
-      renderEmbeddedNotebook();
-    }
-
-    function updateUserBadges() {
-      const member = COHORT_MEMBERS.find(m => m.name === state.currentUser.name) || COHORT_MEMBERS[0];
-      const avatar = document.getElementById('user-badge-avatar');
-      if (avatar) {
-        avatar.className = `w-9 h-9 rounded-2xl flex items-center justify-center text-white font-extrabold text-xs shadow-sm ring-2 ring-emerald-100 ${member.bgClass}`;
-        avatar.textContent = state.currentUser.avatarInitials;
-      }
-      const display = document.getElementById('main-user-display');
-      if (display) display.textContent = state.currentUser.name;
-    }
-
-    function renderPalette() {
-      const container = document.getElementById('palette-grid');
-      if (!container) return;
-      container.innerHTML = COHORT_MEMBERS.map(m => `
-        <div class="p-3 rounded-2xl border-2 ${m.borderClass} ${m.lightBg} flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <span class="w-8 h-8 rounded-xl ${m.bgClass} text-white font-bold text-xs flex items-center justify-center">
-              ${m.name.substring(0, 2).toUpperCase()}
-            </span>
-            <div>
-              <div class="text-xs font-bold text-slate-800">${m.name}</div>
-              <div class="text-[10px] text-slate-500">${m.track}</div>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function renderUserSlots() {
-      const container = document.getElementById('user-slots-list');
-      if (!container) return;
-      container.innerHTML = COHORT_MEMBERS.map(m => `
-        <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200">
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full ${m.bgClass}"></span>
-            <div>
-              <div class="text-xs font-bold text-slate-800">${m.name}</div>
-              <div class="text-[10px] text-slate-400">${m.track}</div>
-            </div>
-          </div>
-          <span class="text-[9px] px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700">Enrolled</span>
-        </div>
-      `).join('');
     }
 
     function renderTimetableDays() {
@@ -1000,53 +770,64 @@
       playChime('step');
       renderTimetableDays();
       renderTimetableContent();
-      renderEmbeddedNotebook();
     }
 
     function renderTimetableContent() {
       const container = document.getElementById('timetable-slots-container');
       const legendRow = document.getElementById('group-legend-row');
 
-      legendRow.innerHTML = `
-        <div class="flex items-center gap-1 text-[11px] text-slate-500 font-semibold">
-          <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-          <span>${state.filterUser === 'All' ? 'Master Grid:' : 'Filter: ' + state.filterUser}</span>
-        </div>
-        <div class="flex items-center gap-1.5 overflow-x-auto">
-          ${COHORT_MEMBERS.map(m => `
-            <button onclick="setFilterParticipant('${m.name}')" class="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${state.filterUser === m.name ? 'bg-slate-900 text-white font-bold' : 'text-slate-600 hover:bg-slate-100'}">
-              <span class="w-2 h-2 rounded-full ${m.bgClass}"></span>
-              <span>${m.name}</span>
-            </button>
-          `).join('')}
-        </div>
-      `;
+      // Unique participants in current schedule
+      const distinctUsers = [...new Set(state.schedule.map(s => s.user))];
+      document.getElementById('capacity-hours-display').textContent = `${state.schedule.length} Sessions`;
+      document.getElementById('active-members-count').textContent = `Active members: ${distinctUsers.length || 1}`;
+
+      if (distinctUsers.length > 0) {
+        legendRow.innerHTML = `
+          <div class="flex items-center gap-1 text-[11px] text-slate-500 font-semibold">
+            <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+            <span>Filter:</span>
+          </div>
+          <div class="flex items-center gap-1.5 overflow-x-auto">
+            <button onclick="setFilterUser('All')" class="text-[10px] px-2 py-0.5 rounded font-bold ${state.filterUser === 'All' ? 'bg-slate-900 text-white' : 'text-slate-600 bg-slate-100'}">All</button>
+            ${distinctUsers.map(u => `
+              <button onclick="setFilterUser('${u}')" class="text-[10px] px-2 py-0.5 rounded font-bold ${state.filterUser === u ? 'bg-emerald-600 text-white' : 'text-slate-600 bg-slate-100'}">${u}</button>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        legendRow.innerHTML = `<span class="text-slate-400 text-[11px]">No slots yet. Click '+' or 'Scan' to add!</span>`;
+      }
 
       let daySlots = state.schedule.filter(s => s.day === state.activeDay);
       if (state.filterUser !== 'All') daySlots = daySlots.filter(s => s.user === state.filterUser);
 
       if (daySlots.length === 0) {
         container.innerHTML = `
-          <div class="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200">
-            <p class="text-xs font-bold text-slate-500">No scheduled sessions for ${state.filterUser} on this day</p>
+          <div class="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+            <p class="text-xs font-bold text-slate-500">No scheduled sessions for this day</p>
+            <p class="text-[10px] text-slate-400 mt-1">Tap below to add your class or scan your schedule</p>
+            <button onclick="openUploadOCRModal()" class="mt-3 px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition">
+              + Scan Screenshot
+            </button>
           </div>
         `;
+        lucide.createIcons();
         return;
       }
 
       container.innerHTML = daySlots.map(slot => {
-        const member = COHORT_MEMBERS.find(m => m.name === slot.user) || COHORT_MEMBERS[0];
-        const isCurrentActive = state.currentUser.name === slot.user;
+        const isCurrentActive = state.currentUser && state.currentUser.name === slot.user;
+        const color = COLOR_THEMES[slot.colorId] || COLOR_THEMES.emerald;
 
         return `
-          <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs border-l-4 ${member.borderClass} relative">
+          <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs border-l-4 ${color.borderClass} relative">
             <div class="flex items-start justify-between">
               <div>
                 <div class="flex items-center gap-1.5 mb-1">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${member.lightBg} ${member.textClass}">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${color.lightBg} ${color.textClass}">
                     ${slot.user} • ${slot.room}
                   </span>
-                  ${isCurrentActive ? '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-full">● Your Session</span>' : ''}
+                  ${isCurrentActive ? '<span class="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-full">● You</span>' : ''}
                 </div>
                 <h4 class="text-xs font-bold text-slate-800 leading-snug">${slot.title}</h4>
                 <div class="text-[11px] text-slate-500 flex items-center gap-1.5 mt-1 font-medium">
@@ -1057,7 +838,7 @@
 
               <button onclick="launchFocusDirectly('${slot.title}')" class="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold flex items-center gap-1 transition shrink-0 ml-2">
                 <i data-lucide="sprout" class="w-3.5 h-3.5 text-emerald-600"></i>
-                <span>Study</span>
+                <span>Focus</span>
               </button>
             </div>
           </div>
@@ -1066,16 +847,9 @@
       lucide.createIcons();
     }
 
-    function renderEmbeddedNotebook() {
-      const scheduleContainer = document.getElementById('embedded-schedule-table');
-      let daySlots = state.schedule.filter(s => s.day === state.activeDay).slice(0, 4);
-
-      scheduleContainer.innerHTML = daySlots.map(s => `
-        <div class="py-1 px-1 flex items-center justify-between">
-          <span class="font-mono text-slate-400 text-[9px]">${s.startTime || s.time.split(' - ')[0]}</span>
-          <span class="font-bold text-slate-800 truncate max-w-[110px]">${s.user}: ${s.room}</span>
-        </div>
-      `).join('');
+    function setFilterUser(userName) {
+      state.filterUser = userName;
+      renderTimetableContent();
     }
 
     function handleSaveNewSlot(e) {
@@ -1083,37 +857,38 @@
       const title = document.getElementById('slot-name-input').value.trim();
       const day = document.getElementById('slot-day-select').value;
       const time = document.getElementById('slot-time-select').value;
-      const room = document.getElementById('slot-room-select').value;
+      const room = document.getElementById('slot-room-input').value.trim() || 'Room A';
       const [start, end] = time.split(' - ');
+
+      const userName = state.currentUser ? state.currentUser.name : 'You';
+      const userColor = state.currentUser ? state.currentUser.colorId : 'emerald';
 
       const newSlot = {
         id: Date.now(),
-        user: state.currentUser.name,
-        colorId: state.currentUser.colorId,
+        user: userName,
+        colorId: userColor,
         day,
         startTime: start,
         endTime: end,
         time,
         room,
-        title,
-        hours: 1.5
+        title
       };
 
       state.schedule.push(newSlot);
       playChime('bell');
-      showToast(`已新增課程：'${title}'！`);
+      showToast(`Added '${title}'!`);
       closeAddSlotModal();
       document.getElementById('slot-name-input').value = '';
 
       renderTimetableContent();
-      renderEmbeddedNotebook();
       populateDynamicGaps();
 
       syncSlotsToCloud([{ day, startTime: start, endTime: end, title, room }]);
     }
 
     function switchScreen(targetScreenId) {
-      const screens = ['screen-login', 'screen-color-select', 'screen-upload-schedule', 'screen-main-timetable', 'screen-focus-plant', 'screen-plant-reward'];
+      const screens = ['screen-welcome', 'screen-main-timetable', 'screen-focus-plant'];
       screens.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -1125,48 +900,12 @@
       document.getElementById('app-viewport').scrollTop = 0;
     }
 
-    function navigateBack(targetId) { switchScreen(targetId); }
-    function startFlow(flowType) {
-      if (flowType === 'group_view') enterMainTimetable();
-      else if (flowType === 'scan_sync') switchScreen('screen-upload-schedule');
-      else switchScreen('screen-color-select');
+    function openUploadOCRModal() {
+      document.getElementById('ocr-upload-modal').classList.remove('opacity-0', 'pointer-events-none');
     }
-    function proceedFromColor() { switchScreen('screen-upload-schedule'); }
-    function enterMainTimetable() {
-      updateUserBadges();
-      renderTimetableDays();
-      renderTimetableContent();
-      renderEmbeddedNotebook();
-      switchScreen('screen-main-timetable');
+    function closeUploadOCRModal() {
+      document.getElementById('ocr-upload-modal').classList.add('opacity-0', 'pointer-events-none');
     }
-
-    function togglePlannerViewMode() {
-      const regularBox = document.getElementById('regular-timetable-container');
-      const notebookBox = document.getElementById('embedded-notebook-container');
-      const viewLabel = document.getElementById('planner-view-label');
-
-      if (state.activePlannerTab === 'cards') {
-        state.activePlannerTab = 'notebook';
-        regularBox.classList.add('hidden');
-        notebookBox.classList.remove('hidden');
-        viewLabel.textContent = "Cards";
-      } else {
-        state.activePlannerTab = 'cards';
-        regularBox.classList.remove('hidden');
-        notebookBox.classList.add('hidden');
-        viewLabel.textContent = "Planner";
-      }
-      playChime('step');
-    }
-
-    function setTabTimetable() {
-      state.activePlannerTab = 'cards';
-      document.getElementById('regular-timetable-container').classList.remove('hidden');
-      document.getElementById('embedded-notebook-container').classList.add('hidden');
-      document.getElementById('planner-view-label').textContent = "Planner";
-      renderTimetableContent();
-    }
-
     function openCommonSlotModal() {
       playChime('bell');
       populateDynamicGaps();
@@ -1181,19 +920,32 @@
     function closeAddSlotModal() {
       document.getElementById('add-slot-modal').classList.add('opacity-0', 'pointer-events-none');
     }
-    function toggleSwitchProfileModal() {
-      const modal = document.getElementById('switch-profile-modal');
-      if (modal.classList.contains('opacity-0')) modal.classList.remove('opacity-0', 'pointer-events-none');
-      else modal.classList.add('opacity-0', 'pointer-events-none');
-    }
+
     function launchFocusDirectly(title) {
       state.focus.activeSubject = title;
       document.getElementById('focus-subject-tag').textContent = title;
       switchScreen('screen-focus-plant');
     }
-    function returnToMainTimetable() { switchScreen('screen-main-timetable'); }
     function exitFocusTimerPrompt() { switchScreen('screen-main-timetable'); }
-    function askAITimeAssistant() { showToast("AI Coach: 請把握 12:30 - 13:30 全員空檔討論！"); }
+
+    function togglePauseResumeFocus() {
+      state.focus.isRunning = !state.focus.isRunning;
+      playChime('step');
+      const text = document.getElementById('text-play-pause');
+      text.textContent = state.focus.isRunning ? "Pause Session" : "Resume Focus";
+    }
+
+    function toggleTurboDemoTimer() {
+      state.focus.turboMode = !state.focus.turboMode;
+      showToast(state.focus.turboMode ? "Turbo: 10s Timer" : "Standard: 25m Timer");
+    }
+
+    function skipToEndOfFocusForDemo() {
+      playChime('success');
+      try { confetti({ particleCount: 70, spread: 60 }); } catch(e) {}
+      showToast("Session completed! Seed harvested 🌱");
+      setTimeout(() => switchScreen('screen-main-timetable'), 1000);
+    }
 
     function showToast(msg) {
       const toast = document.getElementById('toast-pill');
